@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Plantas vs Zombis: Fracciones Animadas</title>
+  <style>
+    :root {
+      --pvz-green: #2e7d32;
+      --pvz-dark: #1b5e20;
+      --pvz-yellow: #fbc02d;
+      --pvz-brown: #5d4037;
+      --bg: #e8f5e9;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 15px;
+      background-color: var(--bg);
+      color: #333;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    h1 { margin: 5px 0; color: var(--pvz-dark); text-align: center; }
+    p.subtitle { margin: 0 0 10px 0; color: #555; font-weight: bold; }
+
+    .game-card {
+      background: #ffffff;
+      border: 4px solid var(--pvz-green);
+      border-radius: 15px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+      padding: 15px;
+      max-width: 650px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    .level-selector {
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .btn-level {
+      background-color: #a5d6a7;
+      border: 2px solid var(--pvz-dark);
+      color: var(--pvz-dark);
+      padding: 6px 10px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .btn-level.active {
+      background-color: var(--pvz-green);
+      color: white;
+    }
+
+    .status-bar {
+      display: flex;
+      justify-content: space-between;
+      background-color: #f1f8e9;
+      padding: 8px 12px;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      font-weight: bold;
+      border: 1px dashed var(--pvz-green);
+    }
+
+    /* CAMPO DE BATALLA ANIMADO */
+    .battlefield {
+      position: relative;
+      width: 100%;
+      height: 120px;
+      background: linear-gradient(#81c784 50%, #66bb6a 50%);
+      border: 3px solid #388e3c;
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 15px;
+    }
+
+    .plant {
+      position: absolute;
+      left: 20px;
+      top: 30px;
+      font-size: 50px;
+      user-select: none;
+    }
+
+    .zombie {
+      position: absolute;
+      right: 0px;
+      top: 30px;
+      font-size: 50px;
+      user-select: none;
+      transition: right 0.1s linear;
+    }
+
+    .pea {
+      position: absolute;
+      top: 50px;
+      font-size: 20px;
+      display: none;
+      user-select: none;
+    }
+
+    .problem-box {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      font-size: 1.6rem;
+      font-weight: bold;
+      margin: 15px 0;
+      background: #fafafa;
+      padding: 10px;
+      border-radius: 10px;
+    }
+
+    .fraction {
+      display: inline-flex;
+      flex-direction: column;
+      text-align: center;
+    }
+
+    .fraction span.num { border-bottom: 3px solid #333; padding: 0 4px; }
+    .fraction span.den { padding: 0 4px; }
+
+    .input-fraction {
+      display: inline-flex;
+      flex-direction: column;
+      gap: 4px;
+      width: 55px;
+    }
+
+    .input-fraction input {
+      width: 100%;
+      height: 32px;
+      font-size: 1.1rem;
+      text-align: center;
+      border: 2px solid var(--pvz-green);
+      border-radius: 6px;
+      font-weight: bold;
+    }
+
+    .actions { display: flex; justify-content: center; gap: 10px; }
+
+    .btn-action {
+      background-color: var(--pvz-yellow);
+      border: 2px solid var(--pvz-brown);
+      color: var(--pvz-brown);
+      padding: 10px 20px;
+      font-size: 1rem;
+      font-weight: bold;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    .feedback {
+      margin-top: 10px;
+      text-align: center;
+      font-size: 1rem;
+      font-weight: bold;
+      min-height: 25px;
+    }
+
+    .correct { color: #2e7d32; }
+    .incorrect { color: #c62828; }
+  </style>
+</head>
+<body>
+
+  <h1>🌻 Plantas vs Zombis 🧠</h1>
+  <p class="subtitle">¡Resuelve las fracciones antes de que el zombi alcance tu planta!</p>
+
+  <div class="game-card">
+    <div class="level-selector">
+      <button class="btn-level active" onclick="setLevel(1)">Nivel 1: Fácil</button>
+      <button class="btn-level" onclick="setLevel(2)">Nivel 2: Medio</button>
+      <button class="btn-level" onclick="setLevel(3)">Nivel 3: Difícil</button>
+      <button class="btn-level" onclick="setLevel(4)">Nivel 4: Zombi Extremo</button>
+    </div>
+
+    <div class="status-bar">
+      <span>❤️ Vidas: <span id="healthCount">3</span></span>
+      <span>🧟 Derrotados: <span id="zombieCount">0</span></span>
+    </div>
+
+    <!-- CAMPO DE JUEGO ANIMADO -->
+    <div class="battlefield" id="field">
+      <div class="plant" id="plant">🌻</div>
+      <div class="pea" id="pea">🟢</div>
+      <div class="zombie" id="zombie">🧟</div>
+    </div>
+
+    <div class="problem-box" id="problemContainer"></div>
+
+    <div class="actions">
+      <button class="btn-action" onclick="checkAnswer()">🌱 ¡Disparar!</button>
+    </div>
+
+    <div class="feedback" id="feedback"></div>
+  </div>
+
+  <script>
+    let currentLevel = 1;
+    let health = 3;
+    let zombiesDefeated = 0;
+    let currentAnsNum = 0;
+    let currentAnsDen = 1;
+
+    let zombiePos = 0; // Distancia desde la derecha en px
+    let zombieTimer = null;
+    let isAttacking = false;
+
+    function gcd(a, b) {
+      return b === 0 ? Math.abs(a) : gcd(b, a % b);
+    }
+
+    function setLevel(lvl) {
+      currentLevel = lvl;
+      document.querySelectorAll('.btn-level').forEach((btn, idx) => {
+        btn.classList.toggle('active', idx + 1 === lvl);
+      });
+      resetGame();
+    }
+
+    function resetGame() {
+      health = 3;
+      zombiesDefeated = 0;
+      document.getElementById('healthCount').innerText = health;
+      document.getElementById('zombieCount').innerText = zombiesDefeated;
+      generateProblem();
+    }
+
+    function getRandomInt(min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function startZombieMovement() {
+      clearInterval(zombieTimer);
+      zombiePos = 0;
+      const zombieElem = document.getElementById('zombie');
+      zombieElem.style.right = '0px';
+
+      // Velocidad según el nivel
+      const speed = 200 - (currentLevel * 35); 
+
+      zombieTimer = setInterval(() => {
+        const fieldWidth = document.getElementById('field').clientWidth;
+        zombiePos += 4;
+        zombieElem.style.right = zombiePos + 'px';
+
+        // Si el zombi llega a la planta
+        if (zombiePos >= fieldWidth - 80) {
+          clearInterval(zombieTimer);
+          health--;
+          document.getElementById('healthCount').innerText = health;
+          document.getElementById('feedback').innerText = '💥 ¡El zombi devoró tu planta!';
+          document.getElementById('feedback').className = 'feedback incorrect';
+
+          if (health <= 0) {
+            alert('🧟 ¡Los Zombis ganaron! Reiniciando juego...');
+            resetGame();
+          } else {
+            setTimeout(generateProblem, 1500);
+          }
+        }
+      }, speed);
+    }
+
+    function generateProblem() {
+      if (isAttacking) return;
+      document.getElementById('feedback').innerText = '';
+      let n1, d1, n2, d2, op = Math.random() > 0.5 ? '+' : '-';
+
+      if (currentLevel === 1) {
+        d1 = d2 = getRandomInt(3, 8);
+        n1 = getRandomInt(1, 6); n2 = getRandomInt(1, 6);
+      } else if (currentLevel === 2) {
+        d1 = getRandomInt(2, 4); d2 = d1 * getRandomInt(2, 3);
+        n1 = getRandomInt(1, 5); n2 = getRandomInt(1, 5);
+      } else if (currentLevel === 3) {
+        d1 = getRandomInt(2, 6);
+        do { d2 = getRandomInt(2, 6); } while (d1 === d2);
+        n1 = getRandomInt(1, 5); n2 = getRandomInt(1, 5);
+      } else {
+        d1 = getRandomInt(4, 10); d2 = getRandomInt(4, 10);
+        n1 = getRandomInt(2, 8); n2 = getRandomInt(2, 8);
+      }
+
+      if (op === '-' && (n1 / d1) < (n2 / d2)) {
+        let tN = n1; n1 = n2; n2 = tN;
+        let tD = d1; d1 = d2; d2 = tD;
+      }
+
+      let rawNum = (op === '+') ? (n1 * d2 + n2 * d1) : (n1 * d2 - n2 * d1);
+      let rawDen = d1 * d2;
+      let div = gcd(rawNum, rawDen);
+
+      currentAnsNum = rawNum / div;
+      currentAnsDen = rawDen / div;
+
+      renderProblem(n1, d1, op, n2, d2);
+      startZombieMovement();
+    }
+
+    function renderProblem(n1, d1, op, n2, d2) {
+      const container = document.getElementById('problemContainer');
+      container.innerHTML = `
+        <div class="fraction"><span class="num">${n1}</span><span class="den">${d1}</span></div>
+        <span>${op}</span>
+        <div class="fraction"><span class="num">${n2}</span><span class="den">${d2}</span></div>
+        <span>=</span>
+        <div class="input-fraction">
+          <input type="number" id="userNum" placeholder="N">
+          <input type="number" id="userDen" placeholder="D">
+        </div>
+      `;
+    }
+
+    function checkAnswer() {
+      if (isAttacking) return;
+      const userNum = parseInt(document.getElementById('userNum').value);
+      const userDen = parseInt(document.getElementById('userDen').value);
+      const feedback = document.getElementById('feedback');
+
+      if (isNaN(userNum) || isNaN(userDen)) {
+        feedback.innerText = '⚠️ Ingresa el numerador y denominador';
+        feedback.className = 'feedback incorrect';
+        return;
+      }
+
+      if (userNum * currentAnsDen === userDen * currentAnsNum) {
+        clearInterval(zombieTimer);
+        isAttacking = true;
+        feedback.innerText = '🌱 ¡Correcto! Lanzando guisante...';
+        feedback.className = 'feedback correct';
+
+        // Animación de disparo
+        const pea = document.getElementById('pea');
+        const fieldWidth = document.getElementById('field').clientWidth;
+        let peaPos = 60;
+        pea.style.display = 'block';
+        pea.style.left = peaPos + 'px';
+
+        let peaTimer = setInterval(() => {
+          peaPos += 15;
+          pea.style.left = peaPos + 'px';
+
+          // Impacto con el zombi
+          if (peaPos >= (fieldWidth - zombiePos - 40)) {
+            clearInterval(peaTimer);
+            pea.style.display = 'none';
+            
+            zombiesDefeated++;
+            document.getElementById('zombieCount').innerText = zombiesDefeated;
+            feedback.innerText = '💥 ¡Zombi derrotado!';
+
+            isAttacking = false;
+            setTimeout(generateProblem, 1000);
+          }
+        }, 30);
+
+      } else {
+        feedback.innerText = '🧟 ¡Error! El zombi sigue avanzando...';
+        feedback.className = 'feedback incorrect';
+      }
+    }
+
+    generateProblem();
+  </script>
+</body>
+</html>
